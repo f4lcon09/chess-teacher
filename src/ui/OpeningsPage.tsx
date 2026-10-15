@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Chess } from 'chess.js'
 import { Chessboard } from 'react-chessboard'
 import { db } from '../db/db'
+import { loadBook, lookupPath, type Book } from '../openings/book'
 import { buildTree, findProblems, posKey, score, type Stats } from '../openings/tree'
 import type { GameRecord, Side } from '../types'
 
@@ -76,6 +77,11 @@ export function OpeningsPage({ version, onOpenGame }: Props) {
     for (const san of path) c.move(san)
     return c
   }, [path])
+  const [book, setBook] = useState<Book | null>(null)
+  useEffect(() => {
+    void loadBook().then(setBook)
+  }, [])
+  const info = book ? lookupPath(book, path) : null
   const node = tree.get(posKey(chess.fen()))
   const moves = node ? [...node.moves.values()].sort((a, b) => b.n - a.n) : []
   const myTurn = (path.length % 2 === 0) === (color === 'white')
@@ -122,6 +128,14 @@ export function OpeningsPage({ version, onOpenGame }: Props) {
             </button>
           </div>
           <p className="muted center">{path.length ? formatPath(path) : 'Start position'}</p>
+          {info && (
+            <p className="center">
+              <strong>{info.eco}</strong> {info.name}
+              {info.leftAtMove !== null && (
+                <span className="muted"> · out of book at move {info.leftAtMove}</span>
+              )}
+            </p>
+          )}
         </div>
 
         <div className="sideCol">
@@ -171,7 +185,10 @@ export function OpeningsPage({ version, onOpenGame }: Props) {
         <tbody>
           {problems.map((p) => (
             <tr key={p.node.key} onClick={() => setPath(p.path)}>
-              <td>{formatPath(p.path)}</td>
+              <td>
+                {formatPath(p.path)}
+                {book && <div className="muted">{lookupPath(book, p.path)?.name ?? ''}</div>}
+              </td>
               <td>{p.node.n} games</td>
               <td>
                 <ResultBar s={p.node} />
