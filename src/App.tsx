@@ -91,7 +91,7 @@ export default function App() {
           </div>
           {tab === 'games' && <GameList version={version} onOpen={setOpenId} />}
           {tab === 'openings' && <OpeningsPage version={version} onOpenGame={setOpenId} />}
-          {tab === 'play' && <PlayPage onSaved={() => setVersion((v) => v + 1)} />}
+          {tab === 'play' && <PlayPage onSaved={() => setVersion((v) => v + 1)} onOpenGame={setOpenId} />}
         </>
       )}
     </main>

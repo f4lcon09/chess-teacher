@@ -43,7 +43,12 @@ export class Engine {
   evaluate(fen: string, depth: number): Promise<PositionEval> {
     return this.enqueue(async () => {
       const lines = await this.send(
-        ['ucinewgame', `position fen ${fen}`, `go depth ${depth}`],
+        [
+          'setoption name Skill Level value 20', // analysis always runs at full strength
+          'ucinewgame',
+          `position fen ${fen}`,
+          `go depth ${depth}`,
+        ],
         (l) => l.startsWith('bestmove'),
       )
       const whiteToMove = fen.split(' ')[1] === 'w'
@@ -67,6 +72,23 @@ export class Engine {
       }
       const best = lines.at(-1)?.match(/^bestmove (\S+)/)?.[1] ?? null
       return { cp, mate, best: best === '(none)' ? null : best, pv: pv.slice(0, 6) }
+    })
+  }
+
+  /** Best move (UCI) at reduced strength, for playing against the engine. */
+  pickMove(fen: string, skill: number, depth: number): Promise<string | null> {
+    return this.enqueue(async () => {
+      const lines = await this.send(
+        [
+          `setoption name Skill Level value ${skill}`,
+          'ucinewgame',
+          `position fen ${fen}`,
+          `go depth ${depth}`,
+        ],
+        (l) => l.startsWith('bestmove'),
+      )
+      const best = lines.at(-1)?.match(/^bestmove (\S+)/)?.[1]
+      return !best || best === '(none)' ? null : best
     })
   }
 

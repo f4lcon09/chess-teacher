@@ -51,5 +51,12 @@ table.games { width: 100%; border-collapse: collapse; }
 .inaccuracy { --c: var(--inaccuracy); } .mistake { --c: var(--mistake); } .blunder { --c: var(--blunder); }
 .note.best, .note.excellent, .note.good, .note.inaccuracy, .note.mistake, .note.blunder { border-left-color: var(--c); }
 .mv.inaccuracy, .mv.mistake, .mv.blunder { color: var(--c); font-weight: 600; }
-.movelist { display: grid; grid-template-columns: 2.5em 1fr 1fr; gap: 2px 8px; background: var(--card); border-radius: 6px; padding: 8px 12px; max-height: 50vh; overflow-y: auto; }
+.boardWrap { position: relative; }
+.flash { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); padding: 6px 18px; border-radius: 20px; background: var(--blunder); color: #fff; font-weight: 700; font-size: 1.2rem; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,.4); }
+.modalBack { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; z-index: 10; }
+.modal { background: var(--card); color: var(--fg); border: 2px solid var(--muted); border-radius: 12px; padding: 24px 36px; text-align: center; min-width: 280px; box-shadow: 0 8px 32px rgba(0,0,0,.5); }
+.modal.win { border-color: var(--best); } .modal.loss { border-color: var(--blunder); }
+.modal h2 { margin: 0 0 6px; font-size: 1.8rem; }
+.modal p { margin: 0 0 16px; font-size: 1.1rem; }
+.movelist { display: grid; grid-template-columns: 2.5em 6em 6em; justify-content: start; gap: 2px 8px; background: var(--card); border-radius: 6px; padding: 8px 12px; max-height: 50vh; overflow-y: auto; }
 .movelist .no { color: var(--muted); }
