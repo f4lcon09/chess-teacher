@@ -1,0 +1,37 @@
+:root {
+  color-scheme: light dark;
+  --bg: #fafafa; --fg: #1d1d1f; --muted: #777; --line: #ddd; --card: #fff;
+  --best: #3aa655; --excellent: #5fae6a; --good: #8aa; --inaccuracy: #d9a21b; --mistake: #e07a1f; --blunder: #d33a3a;
+  font-family: system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1b1b1d; --fg: #eaeaea; --muted: #999; --line: #333; --card: #252528; }
+}
+body { margin: 0; background: var(--bg); color: var(--fg); }
+main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+h1 { margin: 0 0 12px; font-size: 1.4rem; }
+.bar { display: flex; gap: 10px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
+.bar.center { justify-content: center; }
+.muted { color: var(--muted); font-size: .9em; }
+input, select, button { font: inherit; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--fg); }
+button { cursor: pointer; }
+button:disabled { opacity: .6; cursor: default; }
+table.games { width: 100%; border-collapse: collapse; }
+.games th, .games td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.games tbody tr { cursor: pointer; }
+.games tbody tr:hover { background: var(--card); }
+.win { color: var(--best); } .loss { color: var(--blunder); }
+.review { display: grid; grid-template-columns: minmax(280px, 560px) 1fr; gap: 16px; }
+@media (max-width: 800px) { .review { grid-template-columns: 1fr; } }
+.boardCol { align-self: start; min-width: 0; }
+.boardWrap { width: 100%; aspect-ratio: 1 / 1; }
+.sideCol { display: flex; flex-direction: column; gap: 10px; }
+.note { background: var(--card); border-left: 5px solid var(--muted); padding: 8px 12px; border-radius: 6px; }
+.note p { margin: 4px 0 0; }
+.moves { display: flex; flex-wrap: wrap; gap: 4px; align-content: flex-start; }
+.mv { padding: 2px 6px; border: 1px solid transparent; background: transparent; }
+.mv.sel { border-color: var(--fg); }
+.best { --c: var(--best); } .excellent { --c: var(--excellent); } .good { --c: var(--good); }
+.inaccuracy { --c: var(--inaccuracy); } .mistake { --c: var(--mistake); } .blunder { --c: var(--blunder); }
+.note.best, .note.excellent, .note.good, .note.inaccuracy, .note.mistake, .note.blunder { border-left-color: var(--c); }
+.mv.inaccuracy, .mv.mistake, .mv.blunder { color: var(--c); font-weight: 600; }
