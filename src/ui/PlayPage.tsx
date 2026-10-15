@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { Chess, type Square } from 'chess.js'
 import { Chessboard } from 'react-chessboard'
 import { db } from '../db/db'
@@ -53,6 +53,13 @@ export function PlayPage({ onSaved }: Props) {
   const [fen, setFen] = useState(() => new Chess().fen())
   const [result, setResult] = useState<string | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
+  const [sans, setSans] = useState<string[]>([])
+
+  /** Mirrors the chess.js game (kept in a ref) into render state. */
+  const sync = useCallback(() => {
+    setFen(chess.current.fen())
+    setSans(chess.current.history())
+  }, [])
 
   const finish = useCallback(
     (side: Side, outcome: Outcome, detail: string, text: string) => {
@@ -98,11 +105,11 @@ export function PlayPage({ onSaved }: Props) {
         const moves = c.moves()
         if (!moves.length) return
         c.move(moves[Math.floor(Math.random() * moves.length)])
-        setFen(c.fen())
+        sync()
         checkEnd(side)
       }, BOT_DELAY_MS)
     },
-    [checkEnd],
+    [checkEnd, sync],
   )
 
   useEffect(() => () => window.clearTimeout(timer.current), [])
@@ -112,7 +119,7 @@ export function PlayPage({ onSaved }: Props) {
     const side: Side = choice === 'random' ? (Math.random() < 0.5 ? 'white' : 'black') : choice
     chess.current = new Chess()
     setColor(side)
-    setFen(chess.current.fen())
+    sync()
     setResult(null)
     setSelected(null)
     if (side === 'black') scheduleBot(side)
@@ -129,7 +136,7 @@ export function PlayPage({ onSaved }: Props) {
       return false
     }
     setSelected(null)
-    setFen(chess.current.fen())
+    sync()
     if (!checkEnd(color)) scheduleBot(color)
     return true
   }
@@ -168,7 +175,7 @@ export function PlayPage({ onSaved }: Props) {
     if (!color || result || c.turn() !== userLetter || c.history().length < 2) return
     c.undo()
     c.undo()
-    setFen(c.fen())
+    sync()
   }
 
   const status = !color
@@ -218,6 +225,16 @@ export function PlayPage({ onSaved }: Props) {
               Games list under "Bot games".
             </p>
           )}
+          <div className="movelist">
+            {sans.length === 0 && <span className="muted">No moves yet.</span>}
+            {Array.from({ length: Math.ceil(sans.length / 2) }, (_, i) => (
+              <Fragment key={i}>
+                <span className="no">{i + 1}.</span>
+                <span>{sans[2 * i]}</span>
+                <span>{sans[2 * i + 1] ?? ''}</span>
+              </Fragment>
+            ))}
+          </div>
         </div>
       </div>
     </div>

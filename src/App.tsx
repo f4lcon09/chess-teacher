@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { GameList } from './ui/GameList'
 import { OpeningsPage } from './ui/OpeningsPage'
 import { PlayPage } from './ui/PlayPage'
@@ -16,8 +16,39 @@ function loadUser() {
 }
 
 type Tab = 'games' | 'openings' | 'play'
+type Theme = 'system' | 'light' | 'dark'
+
+const THEME_KEY = 'chess-teacher:theme'
+
+function loadTheme(): Theme {
+  try {
+    const t = localStorage.getItem(THEME_KEY)
+    if (t === 'light' || t === 'dark') return t
+  } catch {
+    /* storage unavailable */
+  }
+  return 'system'
+}
 
 export default function App() {
+  const [theme, setThemeState] = useState<Theme>(loadTheme)
+
+  // 'system' leaves data-theme unset so the prefers-color-scheme media query decides.
+  useEffect(() => {
+    const root = document.documentElement
+    if (theme === 'system') root.removeAttribute('data-theme')
+    else root.dataset.theme = theme
+  }, [theme])
+
+  const setTheme = (t: Theme) => {
+    setThemeState(t)
+    try {
+      localStorage.setItem(THEME_KEY, t)
+    } catch {
+      /* storage unavailable */
+    }
+  }
+
   const [user, setUserState] = useState(loadUser)
   const [tab, setTab] = useState<Tab>('games')
   const [openId, setOpenId] = useState<string | null>(null)
@@ -34,7 +65,14 @@ export default function App() {
 
   return (
     <main>
-      <h1>Chess Teacher</h1>
+      <div className="head">
+        <h1>Chess Teacher</h1>
+        <select value={theme} onChange={(e) => setTheme(e.target.value as Theme)} aria-label="Theme">
+          <option value="system">Theme: System</option>
+          <option value="light">Theme: Light</option>
+          <option value="dark">Theme: Dark</option>
+        </select>
+      </div>
       <SyncBar user={user} setUser={setUser} onSynced={() => setVersion((v) => v + 1)} />
       {openId ? (
         <ReviewPage id={openId} onBack={() => setOpenId(null)} />
