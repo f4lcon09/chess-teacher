@@ -23,6 +23,12 @@ table.games { width: 100%; border-collapse: collapse; }
 .win { color: var(--best); } .loss { color: var(--blunder); }
 .review { display: grid; grid-template-columns: minmax(280px, 560px) 1fr; gap: 16px; }
 @media (max-width: 800px) { .review { grid-template-columns: 1fr; } }
+.tabs { display: flex; gap: 6px; margin: 8px 0; }
+.tabs .on { border-color: var(--fg); font-weight: 600; }
+.center { text-align: center; }
+h3 { margin: 16px 0 6px; font-size: 1rem; }
+.rbar { display: inline-flex; width: 120px; height: 10px; border-radius: 5px; overflow: hidden; background: var(--line); vertical-align: middle; }
+.rbar i { display: block; height: 100%; }
 .boardCol { align-self: start; min-width: 0; }
 .boardWrap { width: 100%; aspect-ratio: 1 / 1; }
 .sideCol { display: flex; flex-direction: column; gap: 10px; }

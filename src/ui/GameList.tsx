@@ -1,49 +1,26 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { db } from '../db/db'
-import { importGames } from '../chesscom/api'
 import type { GameRecord } from '../types'
 
 interface Props {
-  user: string
-  setUser: (u: string) => void
+  version: number
   onOpen: (id: string) => void
 }
 
 const OUTCOME_LABEL = { win: 'Win', loss: 'Loss', draw: 'Draw' } as const
 
-export function GameList({ user, setUser, onOpen }: Props) {
+export function GameList({ version, onOpen }: Props) {
   const [games, setGames] = useState<GameRecord[]>([])
   const [analyzed, setAnalyzed] = useState<Set<string>>(new Set())
-  const [name, setName] = useState(user)
-  const [progress, setProgress] = useState<string>('')
-  const [busy, setBusy] = useState(false)
   const [timeClass, setTimeClass] = useState('all')
   const [color, setColor] = useState('all')
 
-  const reload = useCallback(async () => {
-    setGames(await db.games.orderBy('endTime').reverse().toArray())
-    setAnalyzed(new Set((await db.analyses.toCollection().primaryKeys()) as string[]))
-  }, [])
-
   useEffect(() => {
-    void reload()
-  }, [reload])
-
-  const runImport = async () => {
-    const u = name.trim()
-    if (!u) return
-    setUser(u)
-    setBusy(true)
-    try {
-      const added = await importGames(u, (d, t) => setProgress(`Month ${d}/${t}`))
-      setProgress(`Done: ${added} new games`)
-      await reload()
-    } catch (e) {
-      setProgress(e instanceof Error ? e.message : 'Import failed')
-    } finally {
-      setBusy(false)
-    }
-  }
+    void (async () => {
+      setGames(await db.games.orderBy('endTime').reverse().toArray())
+      setAnalyzed(new Set((await db.analyses.toCollection().primaryKeys()) as string[]))
+    })()
+  }, [version])
 
   const shown = useMemo(
     () =>
@@ -57,18 +34,6 @@ export function GameList({ user, setUser, onOpen }: Props) {
 
   return (
     <div>
-      <div className="bar">
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="chess.com username"
-          onKeyDown={(e) => e.key === 'Enter' && void runImport()}
-        />
-        <button onClick={() => void runImport()} disabled={busy}>
-          {busy ? 'Importing…' : 'Import games'}
-        </button>
-        <span className="muted">{progress}</span>
-      </div>
       <div className="bar">
         <select value={timeClass} onChange={(e) => setTimeClass(e.target.value)}>
           <option value="all">All time classes</option>

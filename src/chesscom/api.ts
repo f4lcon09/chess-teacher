@@ -82,19 +82,34 @@ async function getJson<T>(url: string): Promise<T> {
   return res.json() as Promise<T>
 }
 
+/** Archive urls end with /YYYY/MM; returns "YYYY/MM" for lexical comparison. */
+function monthOf(archiveUrl: string): string {
+  return archiveUrl.split('/').slice(-2).join('/')
+}
+
 /**
- * Downloads every monthly archive, newest first, and stores new games.
- * Returns how many games were added.
+ * Downloads monthly archives, newest first, and stores new games.
+ * Incremental by default: only months from the newest stored game onwards.
+ * Returns the ids of the games that were added.
  */
 export async function importGames(
   user: string,
   onProgress: (done: number, total: number) => void,
-): Promise<number> {
+  full = false,
+): Promise<string[]> {
   const { archives } = await getJson<{ archives: string[] }>(
     `${BASE}/${user.toLowerCase()}/games/archives`,
   )
-  const urls = [...archives].reverse()
-  let added = 0
+  let urls = [...archives].reverse()
+  if (!full) {
+    const latest = await db.games.orderBy('endTime').last()
+    if (latest) {
+      const d = new Date(latest.endTime * 1000)
+      const since = `${d.getUTCFullYear()}/${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+      urls = urls.filter((u) => monthOf(u) >= since)
+    }
+  }
+  const added: string[] = []
   for (let i = 0; i < urls.length; i++) {
     onProgress(i, urls.length)
     const { games } = await getJson<{ games: RawGame[] }>(urls[i])
@@ -104,7 +119,7 @@ export async function importGames(
     const existing = await db.games.bulkGet(records.map((r) => r.id))
     const fresh = records.filter((_, idx) => !existing[idx])
     if (fresh.length) await db.games.bulkAdd(fresh)
-    added += fresh.length
+    added.push(...fresh.map((r) => r.id))
   }
   onProgress(urls.length, urls.length)
   return added

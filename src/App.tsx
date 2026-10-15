@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { GameList } from './ui/GameList'
+import { OpeningsPage } from './ui/OpeningsPage'
 import { ReviewPage } from './ui/ReviewPage'
+import { SyncBar } from './ui/SyncBar'
 
 const KEY = 'chess-teacher:user'
 
@@ -12,9 +14,13 @@ function loadUser() {
   }
 }
 
+type Tab = 'games' | 'openings'
+
 export default function App() {
   const [user, setUserState] = useState(loadUser)
+  const [tab, setTab] = useState<Tab>('games')
   const [openId, setOpenId] = useState<string | null>(null)
+  const [version, setVersion] = useState(0)
 
   const setUser = (u: string) => {
     setUserState(u)
@@ -28,10 +34,25 @@ export default function App() {
   return (
     <main>
       <h1>Chess Teacher</h1>
+      <SyncBar user={user} setUser={setUser} onSynced={() => setVersion((v) => v + 1)} />
       {openId ? (
         <ReviewPage id={openId} onBack={() => setOpenId(null)} />
       ) : (
-        <GameList user={user} setUser={setUser} onOpen={setOpenId} />
+        <>
+          <div className="tabs">
+            <button className={tab === 'games' ? 'on' : ''} onClick={() => setTab('games')}>
+              Games
+            </button>
+            <button className={tab === 'openings' ? 'on' : ''} onClick={() => setTab('openings')}>
+              Openings
+            </button>
+          </div>
+          {tab === 'games' ? (
+            <GameList version={version} onOpen={setOpenId} />
+          ) : (
+            <OpeningsPage version={version} onOpenGame={setOpenId} />
+          )}
+        </>
       )}
     </main>
   )
