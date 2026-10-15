@@ -50,9 +50,12 @@ export class Engine {
       const sign = whiteToMove ? 1 : -1
       let cp = 0
       let mate: number | null = null
+      let pv: string[] = []
       for (const l of lines) {
         const m = l.match(/ score (cp|mate) (-?\d+)/)
         if (!m || l.includes('lowerbound') || l.includes('upperbound')) continue
+        const pvm = l.match(/ pv (.+)$/)
+        if (pvm) pv = pvm[1].trim().split(/\s+/)
         const v = Number(m[2]) * sign
         if (m[1] === 'cp') {
           cp = v
@@ -63,7 +66,7 @@ export class Engine {
         }
       }
       const best = lines.at(-1)?.match(/^bestmove (\S+)/)?.[1] ?? null
-      return { cp, mate, best: best === '(none)' ? null : best }
+      return { cp, mate, best: best === '(none)' ? null : best, pv: pv.slice(0, 6) }
     })
   }
 

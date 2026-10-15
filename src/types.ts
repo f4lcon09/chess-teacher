@@ -31,6 +31,7 @@ export interface PositionEval {
   cp: number // centipawns, mates folded into +-10000
   mate: number | null // moves to mate, signed (positive = White mates)
   best: string | null // best move in UCI, null if game over
+  pv?: string[] // principal variation in UCI (first plies), absent in old analyses
 }
 
 export interface MoveAnalysis {
