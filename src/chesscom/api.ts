@@ -102,7 +102,12 @@ export async function importGames(
   )
   let urls = [...archives].reverse()
   if (!full) {
-    const latest = await db.games.orderBy('endTime').last()
+    // Only chess.com games count: locally played games must not move the cutoff.
+    const latest = await db.games
+      .orderBy('endTime')
+      .reverse()
+      .filter((g) => g.id.startsWith('https://'))
+      .first()
     if (latest) {
       const d = new Date(latest.endTime * 1000)
       const since = `${d.getUTCFullYear()}/${String(d.getUTCMonth() + 1).padStart(2, '0')}`

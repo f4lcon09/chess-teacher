@@ -41,6 +41,7 @@ export function GameList({ version, onOpen }: Props) {
           <option value="blitz">Blitz</option>
           <option value="rapid">Rapid</option>
           <option value="daily">Daily</option>
+          <option value="bot">Bot games</option>
         </select>
         <select value={color} onChange={(e) => setColor(e.target.value)}>
           <option value="all">Both colors</option>
