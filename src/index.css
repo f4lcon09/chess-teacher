@@ -59,6 +59,15 @@ table.games { width: 100%; border-collapse: collapse; }
 .dot { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--c); color: #fff; font-size: 11px; font-weight: 800; font-style: normal; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 4px 2px; }
 .chip { display: inline-flex; align-items: center; gap: 6px; font-size: .95em; }
+.review.withbars { grid-template-columns: minmax(320px, min(calc(100vh - 290px), 62vw)) minmax(300px, 1fr); }
+@media (max-width: 800px) { .review.withbars { grid-template-columns: 1fr; } }
+.pbar { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; margin: 4px 0; border-radius: 6px; background: var(--card); border: 2px solid transparent; font-weight: 600; }
+.pbar.active { border-color: var(--best); }
+.pbar .clock { font-variant-numeric: tabular-nums; font-size: 1.3rem; }
+.pbar.active .clock { color: var(--best); }
+.pbar.low .clock { color: var(--blunder); }
+.custom { display: inline-flex; gap: 4px; }
+.custom input { width: 4.5em; }
 .boardWrap { position: relative; }
 .badge { position: absolute; width: 4.4%; aspect-ratio: 1; min-width: 22px; transform: translate(-70%, -30%); border-radius: 50%; background: var(--c); color: #fff; font-weight: 800; font-size: clamp(11px, 1.6vw, 20px); display: flex; align-items: center; justify-content: center; pointer-events: none; box-shadow: 0 1px 4px rgba(0,0,0,.5); z-index: 5; }
 .flash { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); padding: 6px 18px; border-radius: 20px; background: var(--blunder); color: #fff; font-weight: 700; font-size: 1.2rem; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,.4); }
