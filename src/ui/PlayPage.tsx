@@ -25,8 +25,8 @@ interface Level {
 const LEVELS: Level[] = [
   { id: 'random', name: 'Random', skill: 0, depth: 1, randomChance: 1 },
   { id: 'beginner', name: 'Beginner', skill: 0, depth: 1, randomChance: 0.45 },
-  { id: 'easy', name: 'Easy', skill: 0, depth: 2, randomChance: 0.25 },
-  { id: 'medium', name: 'Medium', skill: 3, depth: 4, randomChance: 0.12 },
+  { id: 'easy', name: 'Easy', skill: 1, depth: 3, randomChance: 0.15 },
+  { id: 'medium', name: 'Medium', skill: 5, depth: 5, randomChance: 0.08 },
   { id: 'hard', name: 'Hard', skill: 8, depth: 6, randomChance: 0.04 },
   { id: 'expert', name: 'Expert', skill: 14, depth: 10, randomChance: 0 },
 ]
