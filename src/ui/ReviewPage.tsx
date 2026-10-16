@@ -15,6 +15,14 @@ const CLS_LABEL: Record<MoveClass, string> = {
   mistake: 'Mistake',
   blunder: 'Blunder',
 }
+const CLS_BADGE: Record<MoveClass, string> = {
+  best: '★',
+  excellent: '!',
+  good: '✓',
+  inaccuracy: '?!',
+  mistake: '?',
+  blunder: '??',
+}
 const CLS_MARK: Record<MoveClass, string> = {
   best: '★',
   excellent: '',
@@ -72,10 +80,22 @@ export function ReviewPage({ id, onBack }: { id: string; onBack: () => void }) {
 
   const move = analysis?.moves[ply - 1]
   const arrows = []
+  const squareStyles: Record<string, React.CSSProperties> = {}
+  let badge: { left: string; top: string } | null = null
   if (move) {
-    arrows.push({ startSquare: move.uci.slice(0, 2), endSquare: move.uci.slice(2, 4), color: '#e0a030' })
+    // Green arrow shows what the engine preferred when the move was not good enough.
     if (move.bestUci && move.bestUci !== move.uci && move.cls !== 'good' && move.cls !== 'excellent')
       arrows.push({ startSquare: move.bestUci.slice(0, 2), endSquare: move.bestUci.slice(2, 4), color: '#3aa655' })
+    const from = move.uci.slice(0, 2)
+    const to = move.uci.slice(2, 4)
+    squareStyles[from] = { background: 'rgba(155, 199, 0, 0.41)' }
+    squareStyles[to] = { background: `color-mix(in srgb, var(--${move.cls}) 55%, transparent)` }
+    // Badge on the destination square's top-right corner (a square is 12.5% of the board).
+    const file = to.charCodeAt(0) - 97
+    const rank = Number(to[1]) - 1
+    const col = game.color === 'white' ? file : 7 - file
+    const row = game.color === 'white' ? 7 - rank : rank
+    badge = { left: `${(col + 1) * 12.5}%`, top: `${row * 12.5}%` }
   }
 
   const chart = analysis?.evals.map((e, i) => ({ ply: i, win: winPct(e.cp) })) ?? []
@@ -102,8 +122,14 @@ export function ReviewPage({ id, onBack }: { id: string; onBack: () => void }) {
                 boardOrientation: game.color,
                 allowDragging: false,
                 arrows,
+                squareStyles,
               }}
             />
+            {move && badge && (
+              <div className={`badge ${move.cls}`} style={badge} title={CLS_LABEL[move.cls]}>
+                {CLS_BADGE[move.cls]}
+              </div>
+            )}
           </div>
           <div className="bar center">
             <button onClick={() => go(0)}>⏮</button>
