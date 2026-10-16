@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { Chessboard } from 'react-chessboard'
 import { Area, AreaChart, ReferenceLine, ResponsiveContainer, Tooltip, YAxis } from 'recharts'
 import { Chess } from 'chess.js'
@@ -23,14 +23,6 @@ const CLS_BADGE: Record<MoveClass, string> = {
   mistake: '?',
   blunder: '??',
 }
-const CLS_MARK: Record<MoveClass, string> = {
-  best: '★',
-  excellent: '',
-  good: '',
-  inaccuracy: '?!',
-  mistake: '?',
-  blunder: '??',
-}
 
 export function ReviewPage({ id, onBack }: { id: string; onBack: () => void }) {
   const [game, setGame] = useState<GameRecord | null>(null)
@@ -46,13 +38,30 @@ export function ReviewPage({ id, onBack }: { id: string; onBack: () => void }) {
     })()
   }, [id])
 
-  const fens = useMemo(() => {
-    if (!game) return []
+  const { fens, sans } = useMemo(() => {
+    if (!game) return { fens: [] as string[], sans: [] as string[] }
     const c = new Chess()
     c.loadPgn(game.pgn)
     const h = c.history({ verbose: true })
-    return [h[0]?.before ?? new Chess().fen(), ...h.map((m) => m.after)]
+    return {
+      fens: [h[0]?.before ?? new Chess().fen(), ...h.map((m) => m.after)],
+      sans: h.map((m) => m.san),
+    }
   }, [game])
+
+  // How many moves of each quality the user played.
+  const counts = useMemo(() => {
+    const out: Record<MoveClass, number> = {
+      best: 0,
+      excellent: 0,
+      good: 0,
+      inaccuracy: 0,
+      mistake: 0,
+      blunder: 0,
+    }
+    if (analysis && game) for (const m of analysis.moves) if (m.color === game.color) out[m.cls]++
+    return out
+  }, [analysis, game])
 
   const maxPly = fens.length - 1
   const go = useCallback((p: number) => setPly(Math.max(0, Math.min(maxPly, p))), [maxPly])
@@ -172,19 +181,37 @@ export function ReviewPage({ id, onBack }: { id: string; onBack: () => void }) {
               {move.explanation && <p>{move.explanation}</p>}
             </div>
           )}
-          <div className="moves">
-            {(analysis?.moves ?? []).map((m) => (
-              <button
-                key={m.ply}
-                className={`mv ${m.cls} ${m.ply === ply ? 'sel' : ''}`}
-                onClick={() => go(m.ply)}
-              >
-                {m.color === 'white' ? `${Math.ceil(m.ply / 2)}. ` : ''}
-                {m.san}
-                {CLS_MARK[m.cls]}
-              </button>
+          <div className="mtable">
+            {Array.from({ length: Math.ceil(sans.length / 2) }, (_, i) => (
+              <Fragment key={i}>
+                <span className="no">{i + 1}.</span>
+                {[2 * i, 2 * i + 1].map((idx) => {
+                  if (idx >= sans.length) return <span key={idx} />
+                  const m = analysis?.moves[idx]
+                  return (
+                    <button
+                      key={idx}
+                      className={`cell ${m?.cls ?? ''} ${idx + 1 === ply ? 'sel' : ''}`}
+                      onClick={() => go(idx + 1)}
+                    >
+                      {m && <i className={`dot ${m.cls}`}>{CLS_BADGE[m.cls]}</i>}
+                      {sans[idx]}
+                    </button>
+                  )
+                })}
+              </Fragment>
             ))}
           </div>
+          {analysis && (
+            <div className="chips">
+              {(Object.keys(CLS_LABEL) as MoveClass[]).map((c) => (
+                <span key={c} className="chip">
+                  <i className={`dot ${c}`}>{CLS_BADGE[c]}</i>
+                  <strong>{counts[c]}</strong> {CLS_LABEL[c]}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

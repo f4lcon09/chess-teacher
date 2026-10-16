@@ -51,6 +51,14 @@ table.games { width: 100%; border-collapse: collapse; }
 .inaccuracy { --c: var(--inaccuracy); } .mistake { --c: var(--mistake); } .blunder { --c: var(--blunder); }
 .note.best, .note.excellent, .note.good, .note.inaccuracy, .note.mistake, .note.blunder { border-left-color: var(--c); }
 .mv.inaccuracy, .mv.mistake, .mv.blunder { color: var(--c); font-weight: 600; }
+.mtable { display: grid; grid-template-columns: 2.6em 1fr 1fr; gap: 2px; background: var(--card); border-radius: 8px; padding: 6px; max-height: calc(100vh - 380px); min-height: 160px; overflow-y: auto; align-content: start; }
+.mtable .no { color: var(--muted); align-self: center; padding-left: 6px; }
+.cell { display: flex; align-items: center; gap: 8px; text-align: left; background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 4px 8px; font-weight: 600; }
+.cell:hover { background: var(--line); }
+.cell.sel { background: var(--line); border-color: var(--fg); }
+.dot { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--c); color: #fff; font-size: 11px; font-weight: 800; font-style: normal; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 4px 2px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: .95em; }
 .boardWrap { position: relative; }
 .badge { position: absolute; width: 4.4%; aspect-ratio: 1; min-width: 22px; transform: translate(-70%, -30%); border-radius: 50%; background: var(--c); color: #fff; font-weight: 800; font-size: clamp(11px, 1.6vw, 20px); display: flex; align-items: center; justify-content: center; pointer-events: none; box-shadow: 0 1px 4px rgba(0,0,0,.5); z-index: 5; }
 .flash { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); padding: 6px 18px; border-radius: 20px; background: var(--blunder); color: #fff; font-weight: 700; font-size: 1.2rem; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,.4); }
