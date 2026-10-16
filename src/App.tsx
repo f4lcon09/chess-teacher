@@ -1,4 +1,11 @@
 import { useEffect, useState } from 'react'
+import {
+  BOARD_THEMES,
+  BoardThemeContext,
+  loadBoardTheme,
+  saveBoardTheme,
+  type BoardThemeId,
+} from './ui/boardTheme'
 import { GameList } from './ui/GameList'
 import { OpeningsPage } from './ui/OpeningsPage'
 import { PlayPage } from './ui/PlayPage'
@@ -63,15 +70,35 @@ export default function App() {
     }
   }
 
+  const [boardTheme, setBoardThemeState] = useState<BoardThemeId>(loadBoardTheme)
+  const setBoardTheme = (id: BoardThemeId) => {
+    setBoardThemeState(id)
+    saveBoardTheme(id)
+  }
+
   return (
+    <BoardThemeContext.Provider value={boardTheme}>
     <main>
       <div className="head">
         <h1>Chess Teacher</h1>
-        <select value={theme} onChange={(e) => setTheme(e.target.value as Theme)} aria-label="Theme">
-          <option value="system">Theme: System</option>
-          <option value="light">Theme: Light</option>
-          <option value="dark">Theme: Dark</option>
-        </select>
+        <div className="bar">
+          <select
+            value={boardTheme}
+            onChange={(e) => setBoardTheme(e.target.value as BoardThemeId)}
+            aria-label="Board colors"
+          >
+            {(Object.keys(BOARD_THEMES) as BoardThemeId[]).map((id) => (
+              <option key={id} value={id}>
+                Board: {BOARD_THEMES[id].name}
+              </option>
+            ))}
+          </select>
+          <select value={theme} onChange={(e) => setTheme(e.target.value as Theme)} aria-label="Theme">
+            <option value="system">Theme: System</option>
+            <option value="light">Theme: Light</option>
+            <option value="dark">Theme: Dark</option>
+          </select>
+        </div>
       </div>
       <SyncBar user={user} setUser={setUser} onSynced={() => setVersion((v) => v + 1)} />
       {openId ? (
@@ -95,5 +122,6 @@ export default function App() {
         </>
       )}
     </main>
+    </BoardThemeContext.Provider>
   )
 }

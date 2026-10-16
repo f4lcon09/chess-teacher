@@ -5,7 +5,11 @@ import { db } from '../db/db'
 import { getEngine } from '../engine/engine'
 import { loadBook, lookupPath } from '../openings/book'
 import { playSound, setSoundEnabled, soundEnabled } from '../sound'
+import { analyzeGame } from '../analysis/analyzeGame'
 import type { GameRecord, Outcome, Side } from '../types'
+import { useBoardStyles } from './boardTheme'
+import { ClassChips } from './moveClass'
+import { countClasses, type ClassCounts } from './moveClassInfo'
 
 type ColorChoice = Side | 'random'
 
@@ -34,6 +38,9 @@ interface EndInfo {
   title: string
   text: string
   gameId: string | null
+  analyzing: boolean
+  counts?: ClassCounts
+  accuracy?: number
 }
 
 function botName(level: Level): string {
@@ -47,7 +54,7 @@ async function saveGame(
   outcome: Outcome,
   resultDetail: string,
   opponent: string,
-): Promise<string | null> {
+): Promise<GameRecord | null> {
   const history = chess.history()
   if (history.length === 0) return null
   const book = await loadBook()
@@ -70,7 +77,7 @@ async function saveGame(
     eco: info?.eco ?? '',
   }
   await db.games.add(record)
-  return record.id
+  return record
 }
 
 interface Props {
@@ -79,6 +86,7 @@ interface Props {
 }
 
 export function PlayPage({ onSaved, onOpenGame }: Props) {
+  const boardStyles = useBoardStyles()
   const chess = useRef(new Chess())
   const epoch = useRef(0) // bumped whenever pending bot moves must be discarded
   const flashTimer = useRef<number | undefined>(undefined)
@@ -111,12 +119,28 @@ export function PlayPage({ onSaved, onOpenGame }: Props) {
     (side: Side, outcome: Outcome, detail: string, title: string, text: string, level: Level) => {
       const kind = outcome
       setResult(`${title} ${text}`)
-      setEnd({ kind, title, text, gameId: null })
+      setEnd({ kind, title, text, gameId: null, analyzing: false })
       setPopup(true)
       playSound(kind)
-      void saveGame(chess.current, side, outcome, detail, botName(level)).then((id) => {
-        setEnd((e) => (e ? { ...e, gameId: id } : e))
+      void saveGame(chess.current, side, outcome, detail, botName(level)).then(async (rec) => {
+        if (!rec) return
+        // Updates only apply while the popup still belongs to this game.
+        const patch = (p: Partial<EndInfo>) =>
+          setEnd((e) => (e && (e.gameId === null || e.gameId === rec.id) ? { ...e, ...p } : e))
+        patch({ gameId: rec.id, analyzing: true })
         onSaved()
+        try {
+          const a = await analyzeGame(rec)
+          patch({
+            gameId: rec.id,
+            analyzing: false,
+            counts: countClasses(a.moves, side),
+            accuracy: a.accuracy[side],
+          })
+          onSaved()
+        } catch {
+          patch({ analyzing: false })
+        }
       })
     },
     [onSaved],
@@ -327,6 +351,7 @@ export function PlayPage({ onSaved, onOpenGame }: Props) {
               options={{
                 position: fen,
                 boardOrientation: color ?? 'white',
+                ...boardStyles,
                 allowDragging: myTurn,
                 canDragPiece: ({ piece }) => piece.pieceType[0] === userLetter,
                 onPieceDrop: onDrop,
@@ -362,6 +387,13 @@ export function PlayPage({ onSaved, onOpenGame }: Props) {
           <div className={`modal ${end.kind}`} onClick={(e) => e.stopPropagation()}>
             <h2>{end.title}</h2>
             <p>{end.text}</p>
+            {end.analyzing && <p className="muted">Analyzing your moves…</p>}
+            {end.counts && (
+              <>
+                <p className="muted">Your accuracy: {end.accuracy?.toFixed(1)}%</p>
+                <ClassChips counts={end.counts} />
+              </>
+            )}
             <div className="bar center">
               <button onClick={start}>New game</button>
               {end.gameId && <button onClick={() => onOpenGame(end.gameId!)}>Analyze game</button>}

@@ -5,26 +5,13 @@ import { Chess } from 'chess.js'
 import { db } from '../db/db'
 import { analyzeGame } from '../analysis/analyzeGame'
 import { winPct } from '../analysis/classify'
-import type { GameAnalysis, GameRecord, MoveClass } from '../types'
-
-const CLS_LABEL: Record<MoveClass, string> = {
-  best: 'Best',
-  excellent: 'Excellent',
-  good: 'Good',
-  inaccuracy: 'Inaccuracy',
-  mistake: 'Mistake',
-  blunder: 'Blunder',
-}
-const CLS_BADGE: Record<MoveClass, string> = {
-  best: '★',
-  excellent: '!',
-  good: '✓',
-  inaccuracy: '?!',
-  mistake: '?',
-  blunder: '??',
-}
+import type { GameAnalysis, GameRecord } from '../types'
+import { useBoardStyles } from './boardTheme'
+import { ClassChips } from './moveClass'
+import { CLS_BADGE, CLS_LABEL, countClasses } from './moveClassInfo'
 
 export function ReviewPage({ id, onBack }: { id: string; onBack: () => void }) {
+  const boardStyles = useBoardStyles()
   const [game, setGame] = useState<GameRecord | null>(null)
   const [analysis, setAnalysis] = useState<GameAnalysis | null>(null)
   const [ply, setPly] = useState(0)
@@ -50,18 +37,10 @@ export function ReviewPage({ id, onBack }: { id: string; onBack: () => void }) {
   }, [game])
 
   // How many moves of each quality the user played.
-  const counts = useMemo(() => {
-    const out: Record<MoveClass, number> = {
-      best: 0,
-      excellent: 0,
-      good: 0,
-      inaccuracy: 0,
-      mistake: 0,
-      blunder: 0,
-    }
-    if (analysis && game) for (const m of analysis.moves) if (m.color === game.color) out[m.cls]++
-    return out
-  }, [analysis, game])
+  const counts = useMemo(
+    () => (analysis && game ? countClasses(analysis.moves, game.color) : null),
+    [analysis, game],
+  )
 
   const maxPly = fens.length - 1
   const go = useCallback((p: number) => setPly(Math.max(0, Math.min(maxPly, p))), [maxPly])
@@ -130,6 +109,7 @@ export function ReviewPage({ id, onBack }: { id: string; onBack: () => void }) {
                 position: fens[ply],
                 boardOrientation: game.color,
                 allowDragging: false,
+                ...boardStyles,
                 arrows,
                 squareStyles,
               }}
@@ -202,16 +182,7 @@ export function ReviewPage({ id, onBack }: { id: string; onBack: () => void }) {
               </Fragment>
             ))}
           </div>
-          {analysis && (
-            <div className="chips">
-              {(Object.keys(CLS_LABEL) as MoveClass[]).map((c) => (
-                <span key={c} className="chip">
-                  <i className={`dot ${c}`}>{CLS_BADGE[c]}</i>
-                  <strong>{counts[c]}</strong> {CLS_LABEL[c]}
-                </span>
-              ))}
-            </div>
-          )}
+          {counts && <ClassChips counts={counts} />}
         </div>
       </div>
     </div>

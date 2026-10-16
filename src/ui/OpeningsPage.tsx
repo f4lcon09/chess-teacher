@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Chess } from 'chess.js'
 import { Chessboard } from 'react-chessboard'
 import { db } from '../db/db'
+import { useBoardStyles } from './boardTheme'
 import { loadBook, lookupPath, type Book } from '../openings/book'
 import { buildTree, findProblems, posKey, score, type Stats } from '../openings/tree'
 import type { GameRecord, Side } from '../types'
@@ -43,6 +44,7 @@ interface Props {
 }
 
 export function OpeningsPage({ version, onOpenGame }: Props) {
+  const boardStyles = useBoardStyles()
   const [all, setAll] = useState<GameRecord[]>([])
   const [color, setColor] = useState<Side>('white')
   const [filter, setFilter] = useState<Filter>('fast')
@@ -118,7 +120,12 @@ export function OpeningsPage({ version, onOpenGame }: Props) {
         <div className="boardCol">
           <div className="boardWrap">
             <Chessboard
-              options={{ position: chess.fen(), boardOrientation: color, allowDragging: false }}
+              options={{
+                position: chess.fen(),
+                boardOrientation: color,
+                allowDragging: false,
+                ...boardStyles,
+              }}
             />
           </div>
           <div className="bar center">
