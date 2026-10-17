@@ -2,6 +2,7 @@ import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { Chess, type Move, type Square } from 'chess.js'
 import { Chessboard } from 'react-chessboard'
 import { db } from '../db/db'
+import { LEVELS, botName, type Level } from '../bots'
 import { getEngine } from '../engine/engine'
 import { loadBook, lookupPath } from '../openings/book'
 import { playSound, setSoundEnabled, soundEnabled } from '../sound'
@@ -20,24 +21,6 @@ import { countClasses, type ClassCounts } from './moveClassInfo'
 
 type ColorChoice = Side | 'random'
 type Opponent = 'bot' | 'local'
-
-interface Level {
-  id: string
-  name: string
-  skill: number // Stockfish "Skill Level", 0..20
-  depth: number // search depth
-  randomChance: number // chance of playing a random legal move instead of the engine's
-}
-
-// First guesses, to be tuned by playing against them.
-const LEVELS: Level[] = [
-  { id: 'random', name: 'Random', skill: 0, depth: 1, randomChance: 1 },
-  { id: 'beginner', name: 'Beginner', skill: 0, depth: 1, randomChance: 0.45 },
-  { id: 'easy', name: 'Easy', skill: 1, depth: 3, randomChance: 0.15 },
-  { id: 'medium', name: 'Medium', skill: 5, depth: 5, randomChance: 0.08 },
-  { id: 'hard', name: 'Hard', skill: 8, depth: 6, randomChance: 0.04 },
-  { id: 'expert', name: 'Expert', skill: 14, depth: 10, randomChance: 0 },
-]
 
 const BOT_DELAY_MS = 450
 
@@ -67,10 +50,6 @@ interface EndInfo {
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1)
 const other = (s: Side): Side => (s === 'white' ? 'black' : 'white')
 
-function botName(level: Level): string {
-  return level.id === 'random' ? 'Random bot' : `Stockfish (${level.name})`
-}
-
 /** Finished game -> record stored next to the chess.com games, so it can be analyzed. */
 async function saveGame(
   chess: Chess,
@@ -95,7 +74,7 @@ async function saveGame(
     resultDetail,
     userRating: 0,
     opponent: cfg.local ? 'Local player' : botName(cfg.level),
-    opponentRating: 0,
+    opponentRating: cfg.local ? 0 : cfg.level.elo,
     openingName: info?.name ?? 'Unknown opening',
     eco: info?.eco ?? '',
   }
@@ -505,7 +484,7 @@ export function PlayPage({ onSaved, onOpenGame }: Props) {
             <select value={levelId} onChange={(e) => setLevelId(e.target.value)} aria-label="Bot level">
               {LEVELS.map((l) => (
                 <option key={l.id} value={l.id}>
-                  Level: {l.name}
+                  Level: {l.name} (~{l.elo})
                 </option>
               ))}
             </select>
