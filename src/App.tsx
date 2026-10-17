@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BoardThemeContext } from './ui/boardTheme'
 import { GameList } from './ui/GameList'
-import { CrownIcon, SlidersIcon, SyncIcon } from './ui/icons'
+import { Brand } from './ui/Brand'
+import { SlidersIcon, SyncIcon } from './ui/icons'
 import { OpeningsPage } from './ui/OpeningsPage'
 import { PlayPage } from './ui/PlayPage'
 import { ReviewPage } from './ui/ReviewPage'
@@ -76,10 +77,7 @@ export default function App() {
   return (
     <BoardThemeContext.Provider value={colors}>
       <header className="top">
-        <div className="brand">
-          <CrownIcon size={26} />
-          <span>Chess Teacher</span>
-        </div>
+        <Brand />
         <nav className="nav">
           {TABS.map((t) => (
             <button
