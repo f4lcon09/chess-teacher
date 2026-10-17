@@ -1,0 +1,5 @@
+Merida chess pieces
+Author: Armando Hernandez Marroquin
+License: GNU GPL, version 2 or later (https://www.gnu.org/licenses/gpl-2.0.txt)
+Source: https://github.com/lichess-org/lila/tree/master/public/piece/merida
+The SVG files in this folder are unmodified copies from that repository.

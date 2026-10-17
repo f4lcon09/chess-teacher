@@ -24,3 +24,7 @@ Vite, React, TypeScript, chess.js, react-chessboard, Dexie, Recharts, Stockfish.
 
 `public/stockfish/` contains an unmodified build of [Stockfish.js](https://github.com/nmrugg/stockfish.js)
 (GPL-3.0, see `Copying.txt` in the npm package). Stockfish is a trademark of its authors.
+
+`public/pieces/merida/` contains the Merida piece set by Armando Hernandez Marroquin
+(GPL 2+), copied unmodified from the [Lichess](https://github.com/lichess-org/lila) collection.
+See the `NOTICE.txt` in that folder.
