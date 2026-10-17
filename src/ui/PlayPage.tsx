@@ -573,7 +573,7 @@ export function PlayPage({ onSaved, onOpenGame }: Props) {
             </p>
           )}
           <div className="movelist">
-            {sans.length === 0 && <span className="muted">No moves yet.</span>}
+            {sans.length === 0 && <span className="muted empty">No moves yet.</span>}
             {Array.from({ length: Math.ceil(sans.length / 2) }, (_, i) => (
               <Fragment key={i}>
                 <span className="no">{i + 1}.</span>

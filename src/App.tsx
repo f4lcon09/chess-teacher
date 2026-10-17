@@ -1,127 +1,131 @@
-import { useEffect, useState } from 'react'
-import {
-  BOARD_THEMES,
-  BoardThemeContext,
-  loadBoardTheme,
-  saveBoardTheme,
-  type BoardThemeId,
-} from './ui/boardTheme'
+import { useEffect, useMemo, useState } from 'react'
+import { BoardThemeContext } from './ui/boardTheme'
 import { GameList } from './ui/GameList'
+import { CrownIcon, SlidersIcon, SyncIcon } from './ui/icons'
 import { OpeningsPage } from './ui/OpeningsPage'
 import { PlayPage } from './ui/PlayPage'
 import { ReviewPage } from './ui/ReviewPage'
-import { SyncBar } from './ui/SyncBar'
+import { SettingsPanel } from './ui/SettingsPanel'
+import {
+  boardColors,
+  loadBoardChoice,
+  loadTheme,
+  saveBoardChoice,
+  saveTheme,
+  type BoardChoice,
+  type ThemeId,
+} from './ui/themes'
+import { formatSync, useSync } from './ui/useSync'
 
-const KEY = 'chess-teacher:user'
+const USER_KEY = 'chess-teacher:user'
 
 function loadUser() {
   try {
-    return localStorage.getItem(KEY) ?? 'vinicios2005'
+    return localStorage.getItem(USER_KEY) ?? 'vinicios2005'
   } catch {
     return 'vinicios2005'
   }
 }
 
-type Tab = 'games' | 'openings' | 'play'
-type Theme = 'system' | 'light' | 'dark'
+type Tab = 'play' | 'games' | 'openings'
 
-const THEME_KEY = 'chess-teacher:theme'
-
-function loadTheme(): Theme {
-  try {
-    const t = localStorage.getItem(THEME_KEY)
-    if (t === 'light' || t === 'dark') return t
-  } catch {
-    /* storage unavailable */
-  }
-  return 'system'
-}
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'play', label: 'Play' },
+  { id: 'games', label: 'Games' },
+  { id: 'openings', label: 'Openings' },
+]
 
 export default function App() {
-  const [theme, setThemeState] = useState<Theme>(loadTheme)
-
-  // 'system' leaves data-theme unset so the prefers-color-scheme media query decides.
-  useEffect(() => {
-    const root = document.documentElement
-    if (theme === 'system') root.removeAttribute('data-theme')
-    else root.dataset.theme = theme
-  }, [theme])
-
-  const setTheme = (t: Theme) => {
-    setThemeState(t)
-    try {
-      localStorage.setItem(THEME_KEY, t)
-    } catch {
-      /* storage unavailable */
-    }
-  }
-
+  const [theme, setThemeState] = useState<ThemeId>(loadTheme)
+  const [board, setBoardState] = useState<BoardChoice>(loadBoardChoice)
   const [user, setUserState] = useState(loadUser)
-  const [tab, setTab] = useState<Tab>('games')
+  const [tab, setTab] = useState<Tab>('play')
   const [openId, setOpenId] = useState<string | null>(null)
   const [version, setVersion] = useState(0)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+  }, [theme])
+
+  const setTheme = (t: ThemeId) => {
+    setThemeState(t)
+    saveTheme(t)
+  }
+  const setBoard = (b: BoardChoice) => {
+    setBoardState(b)
+    saveBoardChoice(b)
+  }
   const setUser = (u: string) => {
     setUserState(u)
     try {
-      localStorage.setItem(KEY, u)
+      localStorage.setItem(USER_KEY, u)
     } catch {
       /* storage unavailable */
     }
   }
 
-  const [boardTheme, setBoardThemeState] = useState<BoardThemeId>(loadBoardTheme)
-  const setBoardTheme = (id: BoardThemeId) => {
-    setBoardThemeState(id)
-    saveBoardTheme(id)
+  const sync = useSync(user, () => setVersion((v) => v + 1))
+  const colors = useMemo(() => boardColors(board, theme), [board, theme])
+
+  const goTab = (t: Tab) => {
+    setOpenId(null)
+    setTab(t)
   }
 
   return (
-    <BoardThemeContext.Provider value={boardTheme}>
-    <main>
-      <div className="head">
-        <h1>Chess Teacher</h1>
-        <div className="bar">
-          <select
-            value={boardTheme}
-            onChange={(e) => setBoardTheme(e.target.value as BoardThemeId)}
-            aria-label="Board colors"
-          >
-            {(Object.keys(BOARD_THEMES) as BoardThemeId[]).map((id) => (
-              <option key={id} value={id}>
-                Board: {BOARD_THEMES[id].name}
-              </option>
-            ))}
-          </select>
-          <select value={theme} onChange={(e) => setTheme(e.target.value as Theme)} aria-label="Theme">
-            <option value="system">Theme: System</option>
-            <option value="light">Theme: Light</option>
-            <option value="dark">Theme: Dark</option>
-          </select>
+    <BoardThemeContext.Provider value={colors}>
+      <header className="top">
+        <div className="brand">
+          <CrownIcon size={26} />
+          <span>Chess Teacher</span>
         </div>
-      </div>
-      <SyncBar user={user} setUser={setUser} onSynced={() => setVersion((v) => v + 1)} />
-      {openId ? (
-        <ReviewPage id={openId} onBack={() => setOpenId(null)} />
-      ) : (
-        <>
-          <div className="tabs">
-            <button className={tab === 'games' ? 'on' : ''} onClick={() => setTab('games')}>
-              Games
+        <nav className="nav">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              className={!openId && tab === t.id ? 'on' : ''}
+              onClick={() => goTab(t.id)}
+            >
+              {t.label}
             </button>
-            <button className={tab === 'openings' ? 'on' : ''} onClick={() => setTab('openings')}>
-              Openings
-            </button>
-            <button className={tab === 'play' ? 'on' : ''} onClick={() => setTab('play')}>
-              Play
-            </button>
-          </div>
-          {tab === 'games' && <GameList version={version} onOpen={setOpenId} />}
-          {tab === 'openings' && <OpeningsPage version={version} onOpenGame={setOpenId} />}
-          {tab === 'play' && <PlayPage onSaved={() => setVersion((v) => v + 1)} onOpenGame={setOpenId} />}
-        </>
+          ))}
+        </nav>
+        <div className="topRight">
+          <span className="muted syncText">{sync.status || formatSync(sync.lastSync)}</span>
+          <button className="accentOutline" onClick={() => void sync.run(false)} disabled={sync.busy}>
+            <SyncIcon />
+            {sync.busy ? 'Syncing…' : 'Sync'}
+          </button>
+          <button className="iconBtn" onClick={() => setSettingsOpen(true)} aria-label="Settings">
+            <SlidersIcon />
+          </button>
+        </div>
+      </header>
+      <div className="scarf" />
+      <main>
+        {openId ? (
+          <ReviewPage id={openId} onBack={() => setOpenId(null)} />
+        ) : (
+          <>
+            {tab === 'play' && <PlayPage onSaved={() => setVersion((v) => v + 1)} onOpenGame={setOpenId} />}
+            {tab === 'games' && <GameList version={version} onOpen={setOpenId} />}
+            {tab === 'openings' && <OpeningsPage version={version} onOpenGame={setOpenId} />}
+          </>
+        )}
+      </main>
+      {settingsOpen && (
+        <SettingsPanel
+          user={user}
+          setUser={setUser}
+          sync={sync}
+          theme={theme}
+          setTheme={setTheme}
+          board={board}
+          setBoard={setBoard}
+          onClose={() => setSettingsOpen(false)}
+        />
       )}
-    </main>
     </BoardThemeContext.Provider>
   )
 }

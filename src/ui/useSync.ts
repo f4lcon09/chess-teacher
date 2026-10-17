@@ -13,6 +13,7 @@ function read(key: string): string | null {
     return null
   }
 }
+
 function write(key: string, value: string) {
   try {
     localStorage.setItem(key, value)
@@ -21,28 +22,28 @@ function write(key: string, value: string) {
   }
 }
 
-function formatSync(ts: string | null): string {
+export function formatSync(ts: string | null): string {
   if (!ts) return 'Never synced'
-  return `Last sync: ${new Date(Number(ts)).toLocaleString()}`
+  const d = new Date(Number(ts))
+  return `Synced ${d.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}`
 }
 
-interface Props {
-  user: string
-  setUser: (u: string) => void
-  onSynced: () => void
-}
-
-export function SyncBar({ user, setUser, onSynced }: Props) {
-  const [name, setName] = useState(user)
+/** chess.com sync state shared by the header button and the settings panel. */
+export function useSync(user: string, onSynced: () => void) {
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState('')
   const [lastSync, setLastSync] = useState(read(SYNC_KEY))
-  const [auto, setAuto] = useState(read(AUTO_KEY) === '1')
+  const [auto, setAutoState] = useState(read(AUTO_KEY) === '1')
 
+  const setAuto = (on: boolean) => {
+    setAutoState(on)
+    write(AUTO_KEY, on ? '1' : '0')
+  }
+
+  /** `full` downloads the whole history again instead of only the recent months. */
   const run = async (full: boolean) => {
-    const u = name.trim()
+    const u = user.trim()
     if (!u || busy) return
-    setUser(u)
     setBusy(true)
     try {
       const added = await importGames(u, (d, t) => setStatus(`Downloading month ${d}/${t}…`), full)
@@ -69,32 +70,5 @@ export function SyncBar({ user, setUser, onSynced }: Props) {
     }
   }
 
-  return (
-    <div className="bar">
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="chess.com username"
-        onKeyDown={(e) => e.key === 'Enter' && void run(false)}
-      />
-      <button onClick={() => void run(false)} disabled={busy}>
-        {busy ? 'Syncing…' : 'Sync chess.com'}
-      </button>
-      <button onClick={() => void run(true)} disabled={busy} title="Download the whole history again">
-        Re-sync everything
-      </button>
-      <label className="muted">
-        <input
-          type="checkbox"
-          checked={auto}
-          onChange={(e) => {
-            setAuto(e.target.checked)
-            write(AUTO_KEY, e.target.checked ? '1' : '0')
-          }}
-        />{' '}
-        Analyze new games
-      </label>
-      <span className="muted">{status || formatSync(lastSync)}</span>
-    </div>
-  )
+  return { busy, status, lastSync, auto, setAuto, run }
 }
