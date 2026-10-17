@@ -34,6 +34,9 @@ table.games { width: 100%; border-collapse: collapse; }
 .games th, .games td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
 .games tbody tr { cursor: pointer; }
 .games tbody tr:hover { background: var(--card); }
+.games tbody tr.sel { background: var(--line); font-weight: 600; }
+.scrollbox { max-height: 36vh; overflow-y: auto; }
+.sideCol > .muted { margin: 0; }
 .win { color: var(--best); } .loss { color: var(--blunder); }
 
 /* Board on the left (as large as the window height allows), notes and move list on the right. */
